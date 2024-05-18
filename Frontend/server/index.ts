@@ -6,7 +6,7 @@ import { renderPage } from "vike/server";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const isProduction = process.env.NODE_ENV === "production";
-const root = __dirname;
+import {root} from './root.js'
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const hmrPort = process.env.HMR_PORT
   ? parseInt(process.env.HMR_PORT, 10)
@@ -32,6 +32,8 @@ async function startServer() {
     ).middlewares;
     app.use(viteDevMiddleware);
   }
+
+  //
 
   /**
    * Vike route
