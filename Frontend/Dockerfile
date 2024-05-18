@@ -4,4 +4,4 @@ RUN bun install
 RUN bun run build
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["bun", "index.ts"]
+CMD ["bun", "server/index.ts"]
