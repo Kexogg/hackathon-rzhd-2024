@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx ./express-entry.ts",
     "build": "vite build",
-    "server": "node --loader ts-node/esm ./server/index.ts",
+    "server": "node --loader ts-node/esm ./express-entry.ts",
     "server:dev": "npm run server",
     "server:prod": "cross-env NODE_ENV=production npm run server",
     "preview": "NODE_ENV=production tsx ./express-entry.ts",
