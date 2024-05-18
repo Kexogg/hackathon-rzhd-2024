@@ -5,6 +5,7 @@ on:
     branches: [ "main", "frontend" ]
     paths:
       - "Frontend/**"
+    tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
     paths:
@@ -14,7 +15,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}-frontend
 
 jobs:
   build:
@@ -34,8 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
+      - name: Install Cosign
         uses: sigstore/cosign-installer@v3.4.0
 
       - name: Set up Docker Buildx
@@ -59,6 +59,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
+          context: Frontend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -74,4 +75,3 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
