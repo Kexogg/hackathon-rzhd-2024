@@ -1,5 +1,6 @@
 package com.backend.imagehandlerms.services
 
+import org.springframework.amqp.core.MessagePostProcessor
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.env.Environment
@@ -69,10 +70,21 @@ class ImageHandlingService(
             message = "Failed to upload image ${tempFile.name} to S3: ${e.message}"
         }
 
-        rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message)
+        sendMessageWithCorrelationId(message)
 
         tempFile.delete()
 
         return response
+    }
+
+    fun sendMessageWithCorrelationId(message: String) {
+        val correlationId = UUID.randomUUID().toString()
+
+        val messagePostProcessor = MessagePostProcessor {
+            it.messageProperties.correlationId = correlationId
+            it
+        }
+
+        rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor)
     }
 }
