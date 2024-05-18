@@ -4,6 +4,11 @@ from PIL import Image
 
 
 def normalize_contrast(image, filename):
+
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hsv[:, :, 1] = 2.0 * hsv[:, :, 1]
+    image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     edges = cv2.Canny(gray_image, 50, 150, apertureSize=3)

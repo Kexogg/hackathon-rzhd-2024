@@ -31,7 +31,7 @@ def get_rows_text(rs):
 
 def process_rows(avg, crops, dic, reader):
     for i in crops:
-        middle = int((i.points[1][1] + i.points[0][1]) / 2)
+        middle = int((i.points[1][1] * 0.4 + i.points[0][1] * 0.6))
         text = reader.recognizer.run(i.img)
         dic[int(middle / avg)].append((i, text))
     rs = {}
