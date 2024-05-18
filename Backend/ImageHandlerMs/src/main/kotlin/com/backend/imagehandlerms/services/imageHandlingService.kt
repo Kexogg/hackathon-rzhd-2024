@@ -1,5 +1,7 @@
 package com.backend.imagehandlerms.services
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.amqp.core.MessagePostProcessor
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -42,8 +44,10 @@ class ImageHandlingService(
 
 
 
-    fun uploadImage(base64Image: String): PutObjectResponse? {
+    fun uploadImage(base64Image: String): JsonNode? {
         val imageBytes: ByteArray
+        var message: String
+
         try {
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
@@ -60,24 +64,38 @@ class ImageHandlingService(
             .key(tempFile.name)
             .build()
 
-        var response: PutObjectResponse? = null
-        var message: String
-
-        try {
-//            response = s3.putObject(putObjectRequest, Path.of(tempFile.absolutePath))
-            message = base64Image
+        message = try {
+//                var response = s3.putObject(putObjectRequest, Path.of(tempFile.absolutePath))
+            base64Image
         } catch (e: Exception) {
-            message = "Failed to upload image ${tempFile.name} to S3: ${e.message}"
+            "Failed to upload image ${tempFile.name} to S3: ${e.message}"
         }
 
-        sendMessageWithCorrelationId(message)
+        val returnResponse = sendMessageWithCorrelationId(message)
 
+        if (returnResponse == null || !isJsonValid(returnResponse)) {
+            println("No response received within the configured timeout period or response is not a valid JSON")
+            return null
+        }
+
+        val mapper = jacksonObjectMapper()
+        val json = mapper.readTree(returnResponse)
         tempFile.delete()
 
-        return response
+        return json
     }
 
-    fun sendMessageWithCorrelationId(message: String) {
+    fun isJsonValid(jsonInString: String): Boolean {
+        return try {
+            val mapper = jacksonObjectMapper()
+            mapper.readTree(jsonInString)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun sendMessageWithCorrelationId(message: String): String? {
         val correlationId = UUID.randomUUID().toString()
 
         val messagePostProcessor = MessagePostProcessor {
@@ -85,12 +103,14 @@ class ImageHandlingService(
             it
         }
 
-        val response = rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor)
+        val response = rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor) as String?
 
         if (response != null) {
             println("Received response: $response")
+            return response
         } else {
             println("No response received within the configured timeout period")
+            return null
         }
     }
 }
