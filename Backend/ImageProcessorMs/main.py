@@ -26,9 +26,6 @@ connection = pika.BlockingConnection(
 
 channel = connection.channel()
 
-channel.queue_declare(queue='processing_queue')
-channel.queue_declare(queue='handler_queue')
-
 channel.basic_qos(prefetch_count=1)
 channel.basic_consume(queue='processing_queue', on_message_callback=on_request)
 
