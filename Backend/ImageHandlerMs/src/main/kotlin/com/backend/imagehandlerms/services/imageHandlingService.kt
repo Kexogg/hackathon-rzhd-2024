@@ -20,6 +20,7 @@ import java.util.*
 @Service
 class ImageHandlingService(
     private val rabbitTemplate: RabbitTemplate,
+    private val pythonMLConsumerService: PythonMLConsumerService,
 ) {
 
 //    private val s3: S3Client = S3Client.builder()
@@ -74,7 +75,7 @@ class ImageHandlingService(
         val returnResponse = sendMessageWithCorrelationId(message)
 
         if (returnResponse == null || !isJsonValid(returnResponse)) {
-            println("No response received within the configured timeout period or response is not a valid JSON")
+            println(returnResponse)
             return null
         }
 
@@ -103,14 +104,15 @@ class ImageHandlingService(
             it
         }
 
-        val response = rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor) as String?
+        rabbitTemplate.convertAndSend(exchangeName, routingKeyProcessing, message, messagePostProcessor)
 
-        if (response != null) {
-            println("Received response: $response")
-            return response
-        } else {
-            println("No response received within the configured timeout period")
-            return null
+        var response: String? = null
+        while (response == null) {
+            response = pythonMLConsumerService.waitForMessageAndProcess()
+            Thread.sleep(500)
         }
+
+        println("Received response: $response")
+        return response
     }
 }

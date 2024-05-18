@@ -22,7 +22,7 @@ def on_request(ch, method, props, body):
 
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST')))
+    pika.ConnectionParameters(host="localhost"))
 
 channel = connection.channel()
 
