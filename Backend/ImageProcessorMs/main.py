@@ -1,8 +1,10 @@
 import os
-
+import json
+import cv2
 import pika
 import base64
 import process
+from shiftlab_ocr.doc2text.reader import Reader
 
 
 def on_request(ch, method, props, body):
@@ -30,3 +32,5 @@ channel.basic_qos(prefetch_count=1)
 channel.basic_consume(queue='processing_queue', on_message_callback=on_request)
 
 channel.start_consuming()
+
+
