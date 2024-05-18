@@ -1,0 +1,10 @@
+opencv-python
+torch==1.11.0
+torchvision==0.12.0
+tqdm==4.62.3
+Pillow==7.1.2
+PyYAML==6.0
+pika==1.3.2
+numpy==1.24.4
+shiftlab-ocr==0.3.2
+seaborn==0.13.2

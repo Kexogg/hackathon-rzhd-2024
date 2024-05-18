@@ -1,0 +1,38 @@
+services:
+  image-handler-ms:
+    image: "ghcr.io/kexogg/hackathon-rzhd-2024-backend:backend"
+    environment:
+      - spring.application.name=ImageHandlerMs
+      - S3_ACCESS_KEY=your_s3_access_key
+      - S3_SECRET_KEY=your_s3_secret_key
+      - S3_URL=https://rzhd-s3.kexogg.ru/
+      - BUCKET_NAME=rzhd-bucket
+      - EXCHANGE_NAME=
+      - RABBITMQ_QUEUE=processing_queue
+      - ROUTING_KEY_PROCESSING=processing_queue
+      - ROUTING_KEY_HANDLER=handler_queue
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8080:8080"
+
+  image-processor-ms:
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    ports:
+      - "1234:1234"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
