@@ -13,7 +13,7 @@ class ImageHandlingController(
 ) {
 
     data class ImageRequest(val image: String)
-    data class EditDataRequest(val newData: String)
+    data class EditDataRequest(val data: String)
 
     @PostMapping("/upload")
     fun uploadImage(@RequestBody imageRequest: ImageRequest): JsonNode? {
@@ -22,13 +22,13 @@ class ImageHandlingController(
         return result
     }
 
-    @PutMapping("/{imageId}")
+    @PutMapping("/Image/{imageId}")
     fun editData(@PathVariable imageId: String, @RequestBody editDataRequest: EditDataRequest): Workbook? {
-        val result = imageHandlingService.editData(imageId, editDataRequest.newData)
+        val result = imageHandlingService.editData(imageId, editDataRequest.data)
         return result
     }
 
-    @GetMapping("/{imageId}")
+    @GetMapping("/Image/{imageId}")
     fun getDataByImageId(@PathVariable imageId: String): Workbook? {
         val result = imageHandlingService.getDataByImageId(imageId)
         return result
