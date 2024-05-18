@@ -35,7 +35,23 @@ export default function Page() {
                     </button>
                 </>
                 :
-                <div>{response.status}</div>
+                <>
+                    <pre>{response.status}</pre>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Строка</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {Object.entries(response).map(([value]) => (
+                            <tr key={value} className={'border'}>
+                                <td>{value}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </>
             }
         </>
     );
