@@ -1,5 +1,5 @@
 //get the base url from ENV
-const baseUrl = import.meta.env.API_URL ?? "http://localhost:3001";
+const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 export const sendImage = async (image: File) => {
     //convert file to base64. Then return data from POST request
