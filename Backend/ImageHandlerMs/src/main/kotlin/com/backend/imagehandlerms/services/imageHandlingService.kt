@@ -51,12 +51,13 @@ class ImageHandlingService(
             return null
         }
 
-        val tempFile = File.createTempFile("image", ".jpg")
+        val uniqueId = UUID.randomUUID().toString()
+        val tempFile = File.createTempFile(uniqueId, ".jpg")
         tempFile.writeBytes(imageBytes)
 
         try {
             minioClient.putObject(
-                PutObjectArgs.builder().bucket(bucketName).`object`(tempFile.name).stream(
+                PutObjectArgs.builder().bucket(bucketName).`object`(uniqueId).stream(
                     tempFile.inputStream(), tempFile.length(), -1
                 )
                     .contentType("image/jpeg")
@@ -66,9 +67,15 @@ class ImageHandlingService(
             return null
         }
 
-        val s3Link = "${s3URL}${bucketName}/${tempFile.name}"
+        val s3Link = "${s3URL}${bucketName}/$uniqueId"
 
-        val returnResponse = sendMessageWithCorrelationId(base64Image) ?: return null
+        var returnResponse = sendMessageWithCorrelationId(base64Image) ?: return null
+
+        val responseMap = jacksonObjectMapper().convertValue(returnResponse, MutableMap::class.java) as MutableMap<String, Any>
+
+        responseMap["imageId"] = uniqueId
+
+        returnResponse = jacksonObjectMapper().valueToTree(responseMap)
 
         tempFile.delete()
         val workbook = Workbook(data = returnResponse.toString(), accuracy = 0.0f, s3Link = s3Link)
