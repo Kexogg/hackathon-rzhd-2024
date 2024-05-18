@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class RabbitMQConfig() {
+class RabbitMQConfig {
 
     private val dotenv: Dotenv = Dotenv.load()
 
