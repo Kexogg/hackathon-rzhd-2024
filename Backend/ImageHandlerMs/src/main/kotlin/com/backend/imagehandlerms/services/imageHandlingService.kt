@@ -3,15 +3,14 @@ package com.backend.imagehandlerms.services
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.minio.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.MessagePostProcessor
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.servlet.function.RequestPredicates.contentType
-import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.io.File
 import java.io.InputStream
-import java.nio.file.Path
 import java.util.*
 
 
@@ -21,6 +20,8 @@ class ImageHandlingService(
     private val pythonMLConsumerService: PythonMLConsumerService,
     private val minioClient: MinioClient
 ) {
+    private val logger: Logger = LoggerFactory.getLogger(ImageHandlingService::class.java)
+
     @Value("\${EXCHANGE_NAME}")
     private lateinit var exchangeName: String
 
@@ -40,8 +41,7 @@ class ImageHandlingService(
         try {
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
-            val logMessage = "Invalid base64 input"
-            println(logMessage)
+            logger.error("Invalid base64 input", e)
             return null
         }
 
@@ -57,16 +57,16 @@ class ImageHandlingService(
                     .build()
             )
             val retrievedObject = retrieveObject(bucketName, tempFile.name)
-            println("Retrieved object: ${retrievedObject.reader().readText()}")
+            logger.info("Retrieved object: ${retrievedObject.reader().readText()}")
         } catch (e: Exception) {
-            println("Failed to upload image ${tempFile.name} to MinIO: ${e.message}")
+            logger.error("Failed to upload image ${tempFile.name} to MinIO", e)
             return null
         }
 
         val returnResponse = sendMessageWithCorrelationId(base64Image)
 
         if (returnResponse == null || !isJsonValid(returnResponse)) {
-            println(returnResponse)
+            logger.error("Invalid response: $returnResponse")
             return null
         }
 
