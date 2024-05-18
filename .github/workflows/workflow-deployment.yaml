@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches: [ "backend" ]
-    paths: [ "Backend/**" ]
+    paths: [ "*" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
