@@ -84,19 +84,23 @@ class ImageHandlingService(
         return returnResponse
     }
 
-    fun editData(id: Long, newData: String): Workbook? {
-        val workbook = workbookRepo.findById(id)
+    fun editData(imageId: String, newData: String): Workbook? {
+        val workbook = workbookRepo.findByImageId(imageId)
 
-        if (!workbook.isPresent) {
-            logger.error("Workbook with id $id not found")
+        if (workbook == null) {
+            logger.error("Workbook with ImageId $imageId not found")
             return null
         }
 
-        val updatedWorkbook = workbook.get().apply {
+        val updatedWorkbook = workbook.apply {
             data = newData
         }
 
         return workbookRepo.save(updatedWorkbook)
+    }
+
+    fun getDataByImageId(imageId: String): Workbook? {
+        return workbookRepo.findByImageId(imageId)
     }
 
     fun isJsonValid(jsonInString: String): Boolean {

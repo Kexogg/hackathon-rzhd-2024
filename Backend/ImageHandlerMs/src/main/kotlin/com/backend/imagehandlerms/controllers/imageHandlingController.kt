@@ -22,9 +22,16 @@ class ImageHandlingController(
         return result
     }
 
-    @PutMapping("edit/{id}")
-    fun editData(@PathVariable id: Long, @RequestBody editDataRequest: EditDataRequest): Workbook? {
-        val result = imageHandlingService.editData(id, editDataRequest.newData)
+    @PutMapping("/{imageId}")
+    fun editData(@PathVariable imageId: String, @RequestBody editDataRequest: EditDataRequest): Workbook? {
+        val result = imageHandlingService.editData(imageId, editDataRequest.newData)
         return result
     }
+
+    @GetMapping("/{imageId}")
+    fun getDataByImageId(@PathVariable imageId: String): Workbook? {
+        val result = imageHandlingService.getDataByImageId(imageId)
+        return result
+    }
+
 }
