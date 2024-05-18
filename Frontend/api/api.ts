@@ -8,7 +8,7 @@ export const sendImage = async (image: File) => {
     return new Promise((resolve) => {
         reader.onload = async () => {
             const base64 = reader.result;
-            const response = await fetch(`${baseUrl}/image`, {
+            const response = await fetch(`${baseUrl}/upload`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
