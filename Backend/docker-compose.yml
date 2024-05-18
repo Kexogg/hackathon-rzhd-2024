@@ -11,7 +11,7 @@ services:
       - RABBITMQ_QUEUE=processing_queue
       - ROUTING_KEY_PROCESSING=processing_queue
       - ROUTING_KEY_HANDLER=handler_queue
-      - RABBITMQ_HOST=localhost
+      - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
