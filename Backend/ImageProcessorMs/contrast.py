@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 
 
-def normalize_contrast(image):
+def normalize_contrast(image, filename):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     edges = cv2.Canny(gray_image, 50, 150, apertureSize=3)
@@ -26,13 +26,13 @@ def normalize_contrast(image):
 
     c = cv2.convertScaleAbs(gray_cropped_image, alpha=2, beta=-100)
 
-    cv2.imwrite('cropped.png', c)
-    im = Image.open("cropped.png")
+    cv2.imwrite(filename + '.png', c)
+    im = Image.open(filename + '.png')
     im = im.convert("RGB")
-    im.save("cropped.png")
+    im.save(filename + '.png')
 
     return im
 
 
 if __name__ == '__main__':
-    normalize_contrast(cv2.imread(input()))
+    normalize_contrast(cv2.imread(input()), input())

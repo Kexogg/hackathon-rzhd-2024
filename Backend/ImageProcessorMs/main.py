@@ -1,37 +1,33 @@
-import cv2
-import contrast
-from shiftlab_ocr.doc2text.reader import Reader
 import pika
 import base64
+import process
+
+
+def on_request(ch, method, props, body):
+    log_start = 'CORRELATION ID: ' + props.correlation_id + " | "
+    print(log_start + 'Got message')
+    with open(props.correlation_id + ".png", "wb") as fh:
+        fh.write(base64.decodebytes(body))
+    print(log_start + 'Image decoded, starting processing')
+    response = process.run(props.correlation_id + '.png')
+    print(log_start + 'Result: ' + response)
+
+    ch.basic_publish(exchange='',
+                     routing_key='handler_queue',
+                     properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                     body=str(response))
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='localhost'))
 
 channel = connection.channel()
 
-channel.queue_declare(queue='my_queue')
-
-def fib(filename):
-    reader = Reader()
-    image = cv2.imread(filename)
-
-    contrast_image = contrast.normalize_contrast(image)
-    result = reader.doc2text("cropped.png")
-
-    return result[1]
-
-def on_request(ch, method, props, body):
-    with open("got.png", "wb") as fh:
-        fh.write(base64.decodebytes(str(body)))
-
-    response = fib('got.png')
-
-    ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
-                     body=str(response))
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+channel.queue_declare(queue='processing_queue')
+channel.queue_declare(queue='handler_queue')
 
 channel.basic_qos(prefetch_count=1)
-channel.basic_consume(queue='my_queue', on_message_callback=on_request)
+channel.basic_consume(queue='processing_queue', on_message_callback=on_request)
 
 channel.start_consuming()
