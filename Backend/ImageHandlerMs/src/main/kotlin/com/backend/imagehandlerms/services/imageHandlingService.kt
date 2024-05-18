@@ -1,6 +1,5 @@
 package com.backend.imagehandlerms.services
 
-import io.github.cdimascio.dotenv.Dotenv
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.env.Environment
@@ -20,8 +19,6 @@ class ImageHandlingService(
     private val rabbitTemplate: RabbitTemplate,
 ) {
 
-    private val dotenv: Dotenv = Dotenv.load()
-
 //    private val s3: S3Client = S3Client.builder()
 //        .region(Region.of(dotenv["S3_REGION"]))
 //        .credentialsProvider(
@@ -36,8 +33,8 @@ class ImageHandlingService(
     @Value("\${EXCHANGE_NAME}")
     private lateinit var exchangeName: String
 
-    @Value("\${ROUTING_KEY}")
-    private lateinit var routingKey: String
+    @Value("\${ROUTING_KEY_PROCESSING}")
+    private lateinit var routingKeyProcessing: String
 
     @Value("\${BUCKET_NAME}")
     private lateinit var bucketName: String
@@ -49,8 +46,8 @@ class ImageHandlingService(
         try {
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
-            val message = "Invalid base64 input"
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, message)
+            val logMessage = "Invalid base64 input"
+            println(logMessage)
             return null
         }
 
@@ -67,12 +64,12 @@ class ImageHandlingService(
 
         try {
 //            response = s3.putObject(putObjectRequest, Path.of(tempFile.absolutePath))
-            message = "Image ${tempFile.name} was successfully uploaded to S3"
+            message = base64Image
         } catch (e: Exception) {
             message = "Failed to upload image ${tempFile.name} to S3: ${e.message}"
         }
 
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, message)
+        rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message)
 
         tempFile.delete()
 

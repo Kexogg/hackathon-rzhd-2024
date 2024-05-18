@@ -1,9 +1,22 @@
 version: '3.8'
 services:
   image-handler-ms:
-    image: "ghcr.io/kexogg/hackathon-rzhd-2024-backend:backend"
-    env_file:
-      - ../.env
+#    image: "ghcr.io/kexogg/hackathon-rzhd-2024-backend:backend"
+    build:
+      context: ./Backend/ImageHandlerMs
+      dockerfile: Dockerfile
+    environment:
+      - S3_ACCESS_KEY=your_s3_access_key
+      - S3_SECRET_KEY=your_s3_secret_key
+      - S3_REGION=your_s3_region
+      - BUCKET_NAME=your_bucket_name
+      - EXCHANGE_NAME=
+      - ROUTING_KEY_PROCESSING=processing_queue
+      - ROUTING_KEY_HANDLER=handler_queue
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
     depends_on:
       - rabbitmq
     ports:
