@@ -49,7 +49,10 @@ class RabbitMQConfig {
 
     @Bean
     fun rabbitTemplate(): RabbitTemplate {
-        return RabbitTemplate(connectionFactory())
+        val template = RabbitTemplate(connectionFactory())
+        template.setReceiveTimeout(20000)
+        template.setReplyTimeout(20000)
+        return template
     }
 
     @Bean

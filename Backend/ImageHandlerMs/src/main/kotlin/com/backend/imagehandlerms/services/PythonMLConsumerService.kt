@@ -7,11 +7,12 @@ import org.springframework.stereotype.Service
 @Service
 class PythonMLConsumerService {
 
-    @RabbitListener(queues = ["\${ROUTING_KEY_PROCESSING}"])
-    fun receiveMessage(message: Message) {
-        val correlationId = message.messageProperties.correlationId
-        println("Received message: ${String(message.body)} with correlationId: $correlationId")
-    }
+//    @RabbitListener(queues = ["\${ROUTING_KEY_PROCESSING}"])
+//    fun receiveMessage(message: Message): String {
+//        val correlationId = message.messageProperties.correlationId
+//        println("Received message: ${String(message.body)} with correlationId: $correlationId")
+//        return "bebra"
+//    }
 
     @RabbitListener(queues = ["\${ROUTING_KEY_HANDLER}"])
     fun receivePythonServiceMessage(message: String) {

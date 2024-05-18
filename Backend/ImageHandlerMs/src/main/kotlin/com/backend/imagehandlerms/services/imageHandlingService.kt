@@ -85,6 +85,12 @@ class ImageHandlingService(
             it
         }
 
-        rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor)
+        val response = rabbitTemplate.convertSendAndReceive(exchangeName, routingKeyProcessing, message, messagePostProcessor)
+
+        if (response != null) {
+            println("Received response: $response")
+        } else {
+            println("No response received within the configured timeout period")
+        }
     }
 }
