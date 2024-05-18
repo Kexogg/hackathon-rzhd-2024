@@ -31,10 +31,10 @@ def normalize_contrast(image, filename):
 
     c = cv2.convertScaleAbs(gray_cropped_image, alpha=2, beta=-100)
 
-    cv2.imwrite(filename + '.png', c)
-    im = Image.open(filename + '.png')
+    cv2.imwrite(filename, c)
+    im = Image.open(filename)
     im = im.convert("RGB")
-    im.save(filename + '.png')
+    im.save(filename)
 
     return im
 
