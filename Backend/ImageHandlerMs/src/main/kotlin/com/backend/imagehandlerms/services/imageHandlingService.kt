@@ -65,16 +65,14 @@ class ImageHandlingService(
 
         val returnResponse = sendMessageWithCorrelationId(base64Image)
 
-        if (returnResponse == null || !isJsonValid(returnResponse)) {
+        if (returnResponse == null) {
             logger.error("Invalid response: $returnResponse")
             return null
         }
 
-        val mapper = jacksonObjectMapper()
-        val json = mapper.readTree(returnResponse)
         tempFile.delete()
 
-        return json
+        return returnResponse
     }
 
     fun isJsonValid(jsonInString: String): Boolean {
@@ -96,7 +94,7 @@ class ImageHandlingService(
         )
     }
 
-    fun sendMessageWithCorrelationId(message: String): String? {
+    fun sendMessageWithCorrelationId(message: String): JsonNode? {
         val correlationId = UUID.randomUUID().toString()
 
         val messagePostProcessor = MessagePostProcessor {
@@ -112,7 +110,12 @@ class ImageHandlingService(
             Thread.sleep(500)
         }
 
-        println("Received response: $response")
-        return response
+        logger.info("Received response: $response")
+        return try {
+            jacksonObjectMapper().readTree(response)
+        } catch (e: Exception) {
+            logger.error("Failed to parse response into JSON", e)
+            null
+        }
     }
 }
