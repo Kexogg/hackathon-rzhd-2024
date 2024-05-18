@@ -5,7 +5,7 @@ services:
       context: ./ImageHandlerMs
       dockerfile: Dockerfile
     env_file:
-      - ./.env
+      - ../.env
     depends_on:
       - rabbitmq
     ports:

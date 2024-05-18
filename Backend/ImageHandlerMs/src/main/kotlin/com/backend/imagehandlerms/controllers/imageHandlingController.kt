@@ -11,9 +11,11 @@ class ImageHandlingController(
     private val imageHandlingService: ImageHandlingService
 ) {
 
+    data class ImageRequest(val image: String)
+
     @PostMapping("/upload")
-    fun uploadImage(@RequestBody image: String): PutObjectResponse? {
-        val result = imageHandlingService.uploadImage(image)
+    fun uploadImage(@RequestBody imageRequest: ImageRequest): PutObjectResponse? {
+        val result = imageHandlingService.uploadImage(imageRequest.image)
         return result
     }
 }

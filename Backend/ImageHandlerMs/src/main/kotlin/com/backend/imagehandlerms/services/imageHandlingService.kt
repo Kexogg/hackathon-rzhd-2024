@@ -35,7 +35,6 @@ class ImageHandlingService(
     private val bucketName = dotenv["BUCKET_NAME"]!!
     private val exchangeName = dotenv["EXCHANGE_NAME"]!!
     private val routingKey = dotenv["ROUTING_KEY"]!!
-    private val queueName = dotenv["RABBITMQ_QUEUE"]!!
 
 
 
@@ -45,7 +44,7 @@ class ImageHandlingService(
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
             val message = "Invalid base64 input"
-            rabbitTemplate.convertAndSend(queueName, message)
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, message)
             return null
         }
 
@@ -67,7 +66,7 @@ class ImageHandlingService(
             message = "Failed to upload image ${tempFile.name} to S3: ${e.message}"
         }
 
-        rabbitTemplate.convertAndSend(queueName, message)
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, message)
 
         tempFile.delete()
 
