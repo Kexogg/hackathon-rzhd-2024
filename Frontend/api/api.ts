@@ -1,4 +1,3 @@
-//get the base url from ENV
 const baseUrl = import.meta.env.BASE_URL + '/api';
 
 export const sendImage = async (image: File) => {
