@@ -1,58 +1,60 @@
 import React from "react";
 import FileInput from "../../components/FileInput/FileInput";
-import {sendImage} from "../../api/api";
+import {parseImage} from "../../api/api";
 
 export default function Page() {
-    const [files, setFiles] = React.useState<File[]>([]);
-    const [response, setResponse] = React.useState<any>(null);
+    const [file, setFile] = React.useState<File | null>(null);
     const [loading, setLoading] = React.useState<boolean>(false);
+    const [error, setError] = React.useState<string | null>(null);
+    const [response, setResponse] = React.useState<IPictureData | null>(null);
     const onFileChange = (files: FileList) => {
-        setFiles(Array.from(files));
-        console.log(files);
+        if (files[0]) {
+            setFile(files[0]);
+        }
     };
-    const sendFiles = async () => {
-        for (const file of files) {
+
+    React.useEffect(() => {
+        if (file) {
             setLoading(true);
-            const response = await sendImage(file).catch((e) => {
-                console.error(e);
+            parseImage(file).then((response) => {
+                setResponse(response);
+                setLoading(false);
+            }).catch((error) => {
+                setError(error);
                 setLoading(false);
             });
-            setLoading(false)
-            console.log(response);
-            setResponse(response);
         }
-    }
+    }, [file]);
+
     if (loading) {
         return <div>Loading...</div>;
     }
+    if (error) {
+        return <div>Error: {JSON.stringify(error)}</div>;
+    }
+    if (!response)
+        return <FileInput onFileChange={onFileChange}/>
     return (
         <>
-            <h1 className="font-bold text-3xl pb-4">Оцифровка трудовых книжек</h1>
-            {!response ?
-                <>
-                    <FileInput onFileChange={onFileChange}/>
-                    <button className="bg-blue-500 text-white p-2 rounded-lg" onClick={() => sendFiles()}>Отправить
-                    </button>
-                </>
-                :
-                <>
-                    <pre>{response.status}</pre>
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Строка</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {Object.entries(response).map(([value]) => (
-                            <tr key={value} className={'border'}>
-                                <td>{value}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </>
-            }
+            <FileInput onFileChange={onFileChange}/>
+            <table className={'table-auto border'}>
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Событие</th>
+                    <th>Основание</th>
+                </tr>
+                </thead>
+                <tbody>
+                {Object.entries(response).map(([key, value]) => (
+                    <tr key={key} className={`border-b ${value[0].length > 0 ? 'border-t-2 border-t-neutral-600' : ''}`}>
+                        <td><span className={'mx-2'}>{value[0]}</span></td>
+                        <td><span className={'mx-2'}>{value[1]}</span></td>
+                        <td><span className={'mx-2'}>{value[2]}</span></td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
         </>
     );
 }
