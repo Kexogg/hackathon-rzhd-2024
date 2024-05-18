@@ -1,9 +1,7 @@
 version: '3.8'
 services:
   image-handler-ms:
-    build:
-      context: ./ImageHandlerMs
-      dockerfile: Dockerfile
+    image: "ghcr.io/kexogg/imagehandlerms:latest"
     env_file:
       - ../.env
     depends_on:
