@@ -40,6 +40,7 @@ const FileInput = ({onFileChange}: FileInputProps) => {
                     dataTransfer.items.add(file);
                 }
                 fileInputRef.current.files = dataTransfer.files;
+                onFileChange(dataTransfer.files);
             }
         }
     };
@@ -51,7 +52,7 @@ const FileInput = ({onFileChange}: FileInputProps) => {
                      onChange={(event) => {
                           onFileChange(event.target.files as FileList);
                      }}
-                   ref={fileInputRef} className={'h-full w-full'}/>
+                   ref={fileInputRef} className={'h-full w-full hidden'}/>
             <div
                 onDragEnter={dragOverHandler}
                 onDragOver={dragOverHandler} onDragLeave={dragLeaveHandler} onDrop={dropHandler}
