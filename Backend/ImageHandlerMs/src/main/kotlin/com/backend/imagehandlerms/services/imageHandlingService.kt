@@ -56,10 +56,7 @@ class ImageHandlingService(
                     .contentType("image/jpeg")
                     .build()
             )
-            val retrievedObject = retrieveObject(bucketName, tempFile.name)
-            logger.info("Retrieved object: ${retrievedObject.reader().readText()}")
         } catch (e: Exception) {
-            logger.error("Failed to upload image ${tempFile.name} to MinIO", e)
             return null
         }
 
