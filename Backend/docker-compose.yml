@@ -5,6 +5,7 @@ services:
       - S3_ACCESS_KEY=your_s3_access_key
       - S3_SECRET_KEY=your_s3_secret_key
       - S3_REGION=your_s3_region
+      - S3-URL=https://rzhd-s3.kexogg.ru/
       - BUCKET_NAME=your_bucket_name
       - EXCHANGE_NAME=
       - ROUTING_KEY_PROCESSING=processing_queue
