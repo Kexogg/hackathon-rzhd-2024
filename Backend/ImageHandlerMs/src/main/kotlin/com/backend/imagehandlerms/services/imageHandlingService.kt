@@ -2,6 +2,7 @@ package com.backend.imagehandlerms.services
 
 import io.github.cdimascio.dotenv.Dotenv
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -32,9 +33,14 @@ class ImageHandlingService(
 //            ))
 //        .build()
 
-    private val bucketName = dotenv["BUCKET_NAME"]!!
-    private val exchangeName = dotenv["EXCHANGE_NAME"]!!
-    private val routingKey = dotenv["ROUTING_KEY"]!!
+    @Value("\${EXCHANGE_NAME}")
+    private lateinit var exchangeName: String
+
+    @Value("\${ROUTING_KEY}")
+    private lateinit var routingKey: String
+
+    @Value("\${BUCKET_NAME}")
+    private lateinit var bucketName: String
 
 
 
