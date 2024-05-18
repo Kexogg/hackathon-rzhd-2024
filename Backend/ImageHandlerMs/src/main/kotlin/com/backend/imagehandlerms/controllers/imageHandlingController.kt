@@ -15,7 +15,8 @@ class ImageHandlingController(
 
     @PostMapping("/upload")
     fun uploadImage(@RequestBody imageRequest: ImageRequest): JsonNode? {
-        val result = imageHandlingService.uploadImage(imageRequest.image)
+        val base64Image = imageRequest.image.substringAfter("base64,")
+        val result = imageHandlingService.uploadImage(base64Image)
         return result
     }
 }
