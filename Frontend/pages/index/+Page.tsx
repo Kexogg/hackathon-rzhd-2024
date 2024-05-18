@@ -31,7 +31,6 @@ export default function Page() {
             {!response ?
                 <>
                     <FileInput onFileChange={onFileChange}/>
-                    {files.length}
                     <button className="bg-blue-500 text-white p-2 rounded-lg" onClick={() => sendFiles()}>Отправить
                     </button>
                 </>
