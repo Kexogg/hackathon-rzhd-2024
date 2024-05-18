@@ -1,6 +1,6 @@
 package com.backend.imagehandlerms.configs
 
-import io.github.cdimascio.dotenv.Dotenv
+
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.BindingBuilder
 import org.springframework.amqp.core.DirectExchange

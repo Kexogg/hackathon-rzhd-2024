@@ -1,5 +1,6 @@
 package com.backend.imagehandlerms.controllers
 
+import com.backend.imagehandlerms.models.Workbook
 import com.backend.imagehandlerms.services.ImageHandlingService
 import com.fasterxml.jackson.databind.JsonNode
 import org.springframework.web.bind.annotation.*
@@ -12,11 +13,18 @@ class ImageHandlingController(
 ) {
 
     data class ImageRequest(val image: String)
+    data class EditDataRequest(val newData: String)
 
     @PostMapping("/upload")
     fun uploadImage(@RequestBody imageRequest: ImageRequest): JsonNode? {
         val base64Image = imageRequest.image.substringAfter("base64,")
         val result = imageHandlingService.uploadImage(base64Image)
+        return result
+    }
+
+    @PutMapping("edit/{id}")
+    fun editData(@PathVariable id: Long, @RequestBody editDataRequest: EditDataRequest): Workbook? {
+        val result = imageHandlingService.editData(id, editDataRequest.newData)
         return result
     }
 }

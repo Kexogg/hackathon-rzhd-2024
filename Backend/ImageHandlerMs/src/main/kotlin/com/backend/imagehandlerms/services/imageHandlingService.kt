@@ -1,5 +1,7 @@
 package com.backend.imagehandlerms.services
 
+import com.backend.imagehandlerms.models.Workbook
+import com.backend.imagehandlerms.repositories.WorkbookRepository
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.minio.*
@@ -18,7 +20,8 @@ import java.util.*
 class ImageHandlingService(
     private val rabbitTemplate: RabbitTemplate,
     private val pythonMLConsumerService: PythonMLConsumerService,
-    private val minioClient: MinioClient
+    private val minioClient: MinioClient,
+    private val workbookRepo: WorkbookRepository
 ) {
     private val logger: Logger = LoggerFactory.getLogger(ImageHandlingService::class.java)
 
@@ -30,6 +33,9 @@ class ImageHandlingService(
 
     @Value("\${BUCKET_NAME}")
     private lateinit var bucketName: String
+
+    @Value("\${S3_URL}")
+    private lateinit var s3URL: String
 
 
     fun uploadImage(base64Image: String): JsonNode? {
@@ -60,16 +66,30 @@ class ImageHandlingService(
             return null
         }
 
-        val returnResponse = sendMessageWithCorrelationId(base64Image)
+        val s3Link = "${s3URL}${bucketName}/${tempFile.name}"
 
-        if (returnResponse == null) {
-            logger.error("Invalid response: $returnResponse")
+        val returnResponse = sendMessageWithCorrelationId(base64Image) ?: return null
+
+        tempFile.delete()
+        val workbook = Workbook(data = returnResponse.toString(), accuracy = 0.0f, s3Link = s3Link)
+        workbookRepo.save(workbook)
+
+        return returnResponse
+    }
+
+    fun editData(id: Long, newData: String): Workbook? {
+        val workbook = workbookRepo.findById(id)
+
+        if (!workbook.isPresent) {
+            logger.error("Workbook with id $id not found")
             return null
         }
 
-        tempFile.delete()
+        val updatedWorkbook = workbook.get().apply {
+            data = newData
+        }
 
-        return returnResponse
+        return workbookRepo.save(updatedWorkbook)
     }
 
     fun isJsonValid(jsonInString: String): Boolean {

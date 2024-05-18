@@ -15,18 +15,34 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_workbooks:5432/db_workbooks
+      - SPRING_DATASOURCE_USERNAME=rzhd_user
+      - SPRING_DATASOURCE_PASSWORD=rzhd_pass
     depends_on:
       - rabbitmq
     ports:
       - "8080:8080"
 
-  image-processor-ms:
-    environment:
-      - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      - rabbitmq
+  db_workbooks:
+    container_name: postgres_workbooks
+    image: postgres:latest
+    volumes:
+      - db_workbooks:/data/postgres
     ports:
-      - "1234:1234"
+      - "5433:5432"
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=rzhd_user
+      - POSTGRES_PASSWORD=rzhd_pass
+      - POSTGRES_DB=db_workbooks
+
+#  image-processor-ms:
+#    environment:
+#      - RABBITMQ_HOST=rabbitmq
+#    depends_on:
+#      - rabbitmq
+#    ports:
+#      - "1234:1234"
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -36,3 +52,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+volumes:
+  db_workbooks:
