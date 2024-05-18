@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   image-handler-ms:
-    image: "ghcr.io/kexogg/imagehandlerms:latest"
+    image: "ghcr.io/kexogg/hackathon-rzhd-2024-backend:backend"
     env_file:
       - ../.env
     depends_on:
