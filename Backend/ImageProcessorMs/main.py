@@ -1,3 +1,5 @@
+import os
+
 import pika
 import base64
 import process
@@ -20,7 +22,7 @@ def on_request(ch, method, props, body):
 
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='localhost'))
+    pika.ConnectionParameters(host=os.getenv('RABBITMQ_HOST')))
 
 channel = connection.channel()
 

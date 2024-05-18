@@ -11,12 +11,20 @@ services:
       - ROUTING_KEY_HANDLER=handler_queue
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_USERNAME =guest
       - RABBITMQ_PASSWORD=guest
     depends_on:
       - rabbitmq
     ports:
       - "8080:8080"
+
+  image-processor-ms:
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    ports:
+      - "1234:1234"
 
   rabbitmq:
     image: rabbitmq:3-management
