@@ -49,23 +49,26 @@ const FileInput = ({onFileChange}: FileInputProps) => {
         <div
             className={`w-full relative h-24 bg-neutral-100 p-1 ${dragging ? 'bg-blue-200' : ''}`}>
             <input type="file"
-                     onChange={(event) => {
-                          onFileChange(event.target.files as FileList);
-                     }}
+                   onChange={(event) => {
+                       onFileChange(event.target.files as FileList);
+                   }}
                    ref={fileInputRef} className={'h-full w-full hidden'}/>
             <div
                 onDragEnter={dragOverHandler}
                 onDragOver={dragOverHandler} onDragLeave={dragLeaveHandler} onDrop={dropHandler}
                 className={'p-3 w-full h-full outline-dashed outline-neutral-400 outline-4 flex flex-col items-center justify-center gap-3'}>
-                <span className={'block'}>Перетащите файлы сюда или нажмите чтобы выбрать файлы</span>
-                <button
-                    className={'block w-fit bg-neutral-300 p-1.5 rounded-lg hover:bg-neutral-200 border border-neutral-600'}
-                    onClick={() => {
-                        if (fileInputRef.current) {
-                            fileInputRef.current.click();
-                        }
-                    }}>Загрузить файл
-                </button>
+                <span className={dragging ? 'block' : 'hidden'}>Отпустите файлы</span>
+                <div className={dragging ? 'hidden' : 'block'}>
+                    <span>Перетащите файлы сюда или нажмите чтобы выбрать файлы</span>
+                    <button
+                        className={'block w-fit bg-neutral-300 p-1.5 rounded-lg hover:bg-neutral-200 border border-neutral-600'}
+                        onClick={() => {
+                            if (fileInputRef.current) {
+                                fileInputRef.current.click();
+                            }
+                        }}>Загрузить файл
+                    </button>
+                </div>
             </div>
         </div>
     );
