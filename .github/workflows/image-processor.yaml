@@ -11,8 +11,12 @@ on:
     branches: [ "backend" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+    paths:
+      - "Backend/ProcessorHandlerMs/**"
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "Backend/ProcessorHandlerMs/**"
 
 env:
   # Use docker.io for Docker Hub if empty
