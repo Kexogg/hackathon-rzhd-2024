@@ -2,13 +2,11 @@ package com.backend.imagehandlerms.controllers
 
 import com.backend.imagehandlerms.services.ImageHandlingService
 import com.fasterxml.jackson.databind.JsonNode
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import software.amazon.awssdk.services.s3.model.PutObjectResponse
 
 @RestController
+@RequestMapping("/api")
 class ImageHandlingController(
     private val imageHandlingService: ImageHandlingService,
 ) {
