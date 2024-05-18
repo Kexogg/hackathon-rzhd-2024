@@ -1,8 +1,6 @@
-FROM node:21-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
+FROM oven/bun:1.1
 COPY . .
-RUN npm run build
+RUN bun install
 EXPOSE 3000
-CMD ["npm", "run", "server:prod"]
+ENV NODE_ENV=production
+CMD ["bun", "express-entry.ts"]
