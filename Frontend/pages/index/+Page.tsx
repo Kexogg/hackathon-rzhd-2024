@@ -74,10 +74,10 @@ export default function Page() {
     }
 
     const header = (
-        <>
+        <div className={'flex flex-col w-full gap-3'}>
             <SearchbarBlock onSearchSubmit={onSearchSubmit}/>
             <FileInput onFileChange={onFileChange}/>
-        </>
+        </div>
     )
 
     if (loading) {
