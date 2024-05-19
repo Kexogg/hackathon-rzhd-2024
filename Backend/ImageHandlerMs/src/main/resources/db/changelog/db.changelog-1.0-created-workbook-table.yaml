@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-workbooks-table
+      author: jaba
+      changes:
+        - createTable:
+            tableName: workbooks
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: data
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: accuracy
+                  type: float
+                  constraints:
+                    nullable: true
+              - column:
+                  name: s3_link
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false

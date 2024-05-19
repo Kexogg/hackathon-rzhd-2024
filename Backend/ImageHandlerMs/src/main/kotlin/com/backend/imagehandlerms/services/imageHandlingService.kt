@@ -1,5 +1,8 @@
 package com.backend.imagehandlerms.services
 
+import com.backend.imagehandlerms.models.Workbook
+import com.backend.imagehandlerms.repositories.WorkbookRepository
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.minio.*
@@ -13,12 +16,24 @@ import java.io.File
 import java.io.InputStream
 import java.util.*
 
+data class ImageText(
+    val field1: String,
+    val field2: String,
+    val field3: String
+)
+
+data class WorkbookResponse(
+    val data: List<ImageText>,
+    val s3Link: String,
+    val imageId: String
+)
 
 @Service
 class ImageHandlingService(
     private val rabbitTemplate: RabbitTemplate,
     private val pythonMLConsumerService: PythonMLConsumerService,
-    private val minioClient: MinioClient
+    private val minioClient: MinioClient,
+    private val workbookRepo: WorkbookRepository
 ) {
     private val logger: Logger = LoggerFactory.getLogger(ImageHandlingService::class.java)
 
@@ -31,6 +46,9 @@ class ImageHandlingService(
     @Value("\${BUCKET_NAME}")
     private lateinit var bucketName: String
 
+    @Value("\${S3_URL}")
+    private lateinit var s3URL: String
+
 
     fun uploadImage(base64Image: String): JsonNode? {
         val imageBytes: ByteArray
@@ -42,37 +60,78 @@ class ImageHandlingService(
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid base64 input", e)
-            return null
+            throw IllegalArgumentException("Invalid base64 input")
         }
 
-        val tempFile = File.createTempFile("image", ".jpg")
+        val uniqueId = UUID.randomUUID().toString()
+        val tempFile = File.createTempFile(uniqueId, ".jpg")
         tempFile.writeBytes(imageBytes)
 
         try {
             minioClient.putObject(
-                PutObjectArgs.builder().bucket(bucketName).`object`(tempFile.name).stream(
+                PutObjectArgs.builder().bucket(bucketName).`object`(uniqueId).stream(
                     tempFile.inputStream(), tempFile.length(), -1
                 )
                     .contentType("image/jpeg")
                     .build()
             )
-            val retrievedObject = retrieveObject(bucketName, tempFile.name)
-            logger.info("Retrieved object: ${retrievedObject.reader().readText()}")
         } catch (e: Exception) {
-            logger.error("Failed to upload image ${tempFile.name} to MinIO", e)
-            return null
+            throw Exception("Failed to put object in bucket")
         }
+
+        val s3Link = "${s3URL}${bucketName}/$uniqueId"
 
         val returnResponse = sendMessageWithCorrelationId(base64Image)
+            ?: throw Exception("Failed to get response from Python ML service")
 
-        if (returnResponse == null) {
-            logger.error("Invalid response: $returnResponse")
-            return null
+        val responseMap = jacksonObjectMapper().convertValue(returnResponse, MutableMap::class.java) as MutableMap<String, Any>
+
+        val imageTextList = responseMap.map { entry ->
+            val list = entry.value as List<String>
+            val imageText = ImageText(list[0], list[1], list[2])
+            jacksonObjectMapper().valueToTree<JsonNode>(imageText)
         }
 
-        tempFile.delete()
+        val imageTextJsonNode = jacksonObjectMapper().createArrayNode().addAll(imageTextList)
 
-        return returnResponse
+        val workbook = Workbook(data = imageTextJsonNode.toString(), accuracy = 0.0f, s3Link = s3Link)
+
+        val newResponseMap = mutableMapOf<String, Any>()
+        newResponseMap["data"] = imageTextJsonNode
+        newResponseMap["imageId"] = uniqueId
+        newResponseMap["s3Link"] = s3Link
+
+        tempFile.delete()
+        workbookRepo.save(workbook)
+
+        return jacksonObjectMapper().valueToTree(newResponseMap)
+    }
+
+    fun editData(imageId: String, newData: JsonNode): Workbook {
+        val workbook = workbookRepo.findByImageId(imageId)
+            ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
+
+        val result = newData.toString().substring(8).dropLast(1)
+
+        val updatedWorkbook = workbook.apply {
+            data = result
+        }
+
+        return workbookRepo.save(updatedWorkbook)
+    }
+
+    fun getDataByImageId(imageId: String): WorkbookResponse {
+        val workbook = workbookRepo.findByImageId(imageId)
+            ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
+
+        val typeRef = object : TypeReference<List<ImageText>>() {}
+        val dataObjects: List<ImageText> = jacksonObjectMapper().readValue(workbook.data, typeRef)
+
+        return WorkbookResponse(
+            data = dataObjects,
+            s3Link = workbook.s3Link,
+            imageId = imageId
+        )
     }
 
     fun isJsonValid(jsonInString: String): Boolean {
@@ -110,7 +169,7 @@ class ImageHandlingService(
             Thread.sleep(500)
         }
 
-        logger.info("Received response: $response")
+        logger.info("Received response in upload fun: $response")
         return try {
             jacksonObjectMapper().readTree(response)
         } catch (e: Exception) {
