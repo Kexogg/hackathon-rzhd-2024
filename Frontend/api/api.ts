@@ -21,7 +21,7 @@ export const parseImage = async (image: File) => {
 export const updateImageData = async (data: IPictureData) => {
     return fetch('/api/image/' + data.imageId, {
         method: 'PUT',
-        body: JSON.stringify({imageText: data.data}),
+        body: JSON.stringify({data: data.data}),
         headers: {
             'Content-Type': 'application/json'
         }
