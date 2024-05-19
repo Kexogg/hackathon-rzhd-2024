@@ -1,18 +1,33 @@
-export const sendImage = async (image: File) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(image);
-    return new Promise((resolve) => {
-        reader.onload = async () => {
-            const base64 = reader.result;
-            const response = await fetch(`api/upload`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({image: base64})
-            });
-            resolve(response);
-        };
-        reader.onerror = error => console.error(error);
+const convertImageToBase64 = (image: File): Promise<string | ArrayBuffer | null> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(image);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
     });
+}
+
+export const parseImage = async (image: File) => {
+    const base64 = await convertImageToBase64(image);
+    return fetch('/api/upload', {
+        method: 'POST',
+        body: JSON.stringify({image: base64}),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json()).catch(error => error);
+}
+
+export const updateImageData = async (data: IPictureData) => {
+    return fetch('/api/image/' + data.imageId, {
+        method: 'PUT',
+        body: JSON.stringify({data: data.data}),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json()).catch(error => error);
+}
+
+export const getImageData = async (imageId: string) => {
+    return fetch('/api/image/' + imageId).then(response => response.json()).catch(error => error);
 }
