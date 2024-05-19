@@ -92,6 +92,7 @@ export default function Page() {
         <div className={'flex flex-col gap-3'}>
             {header}
             <img src={response.s3Link} alt={'Картинка трудовой книжки'} className={'w-1/2'}/>
+            <pre>{response.imageId}</pre>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <table className={'table table-auto border w-full'}>
                     <thead>
