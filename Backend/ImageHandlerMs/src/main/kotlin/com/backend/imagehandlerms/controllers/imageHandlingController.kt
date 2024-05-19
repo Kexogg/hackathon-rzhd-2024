@@ -15,7 +15,7 @@ class ImageHandlingController(
 ) {
 
     data class ImageRequest(val image: String)
-    data class EditDataRequest(val data: String)
+    data class EditDataRequest(val data: JsonNode)
 
     @PostMapping("/upload")
     fun uploadImage(@RequestBody imageRequest: ImageRequest): ResponseEntity<Any> {

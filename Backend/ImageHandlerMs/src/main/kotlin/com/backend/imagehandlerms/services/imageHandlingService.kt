@@ -2,6 +2,7 @@ package com.backend.imagehandlerms.services
 
 import com.backend.imagehandlerms.models.Workbook
 import com.backend.imagehandlerms.repositories.WorkbookRepository
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.minio.*
@@ -13,13 +14,18 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.InputStream
-import java.time.LocalDateTime
 import java.util.*
 
 data class ImageText(
     val field1: String,
     val field2: String,
     val field3: String
+)
+
+data class WorkbookResponse(
+    val data: List<ImageText>,
+    val s3Link: String,
+    val imageId: String
 )
 
 @Service
@@ -80,8 +86,6 @@ class ImageHandlingService(
 
         val responseMap = jacksonObjectMapper().convertValue(returnResponse, MutableMap::class.java) as MutableMap<String, Any>
 
-        val workbook = Workbook(data = returnResponse.toString(), accuracy = 0.0f, s3Link = s3Link)
-
         val imageTextList = responseMap.map { entry ->
             val list = entry.value as List<String>
             val imageText = ImageText(list[0], list[1], list[2])
@@ -90,10 +94,12 @@ class ImageHandlingService(
 
         val imageTextJsonNode = jacksonObjectMapper().createArrayNode().addAll(imageTextList)
 
+        val workbook = Workbook(data = imageTextJsonNode.toString(), accuracy = 0.0f, s3Link = s3Link)
+
         val newResponseMap = mutableMapOf<String, Any>()
-        newResponseMap["imageText"] = imageTextJsonNode
+        newResponseMap["data"] = imageTextJsonNode
         newResponseMap["imageId"] = uniqueId
-        newResponseMap["s3_link"] = s3Link
+        newResponseMap["s3Link"] = s3Link
 
         tempFile.delete()
         workbookRepo.save(workbook)
@@ -101,20 +107,31 @@ class ImageHandlingService(
         return jacksonObjectMapper().valueToTree(newResponseMap)
     }
 
-    fun editData(imageId: String, newData: String): Workbook {
+    fun editData(imageId: String, newData: JsonNode): Workbook {
         val workbook = workbookRepo.findByImageId(imageId)
             ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
 
+        val result = newData.toString().substring(8).dropLast(1)
+
         val updatedWorkbook = workbook.apply {
-            data = newData
+            data = result
         }
 
         return workbookRepo.save(updatedWorkbook)
     }
 
-    fun getDataByImageId(imageId: String): Workbook {
-        return workbookRepo.findByImageId(imageId)
+    fun getDataByImageId(imageId: String): WorkbookResponse {
+        val workbook = workbookRepo.findByImageId(imageId)
             ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
+
+        val typeRef = object : TypeReference<List<ImageText>>() {}
+        val dataObjects: List<ImageText> = jacksonObjectMapper().readValue(workbook.data, typeRef)
+
+        return WorkbookResponse(
+            data = dataObjects,
+            s3Link = workbook.s3Link,
+            imageId = imageId
+        )
     }
 
     fun isJsonValid(jsonInString: String): Boolean {
