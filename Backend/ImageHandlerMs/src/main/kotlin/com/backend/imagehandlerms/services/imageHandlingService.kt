@@ -54,7 +54,7 @@ class ImageHandlingService(
             imageBytes = Base64.getDecoder().decode(base64Image)
         } catch (e: IllegalArgumentException) {
             logger.error("Invalid base64 input", e)
-            return null
+            throw IllegalArgumentException("Invalid base64 input")
         }
 
         val uniqueId = UUID.randomUUID().toString()
@@ -70,12 +70,13 @@ class ImageHandlingService(
                     .build()
             )
         } catch (e: Exception) {
-            return null
+            throw Exception("Failed to put object in bucket")
         }
 
         val s3Link = "${s3URL}${bucketName}/$uniqueId"
 
-        var returnResponse = sendMessageWithCorrelationId(base64Image) ?: return null
+        val returnResponse = sendMessageWithCorrelationId(base64Image)
+            ?: throw Exception("Failed to get response from Python ML service")
 
         val responseMap = jacksonObjectMapper().convertValue(returnResponse, MutableMap::class.java) as MutableMap<String, Any>
 
@@ -100,13 +101,9 @@ class ImageHandlingService(
         return jacksonObjectMapper().valueToTree(newResponseMap)
     }
 
-    fun editData(imageId: String, newData: String): Workbook? {
+    fun editData(imageId: String, newData: String): Workbook {
         val workbook = workbookRepo.findByImageId(imageId)
-
-        if (workbook == null) {
-            logger.error("Workbook with ImageId $imageId not found")
-            return null
-        }
+            ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
 
         val updatedWorkbook = workbook.apply {
             data = newData
@@ -115,8 +112,9 @@ class ImageHandlingService(
         return workbookRepo.save(updatedWorkbook)
     }
 
-    fun getDataByImageId(imageId: String): Workbook? {
+    fun getDataByImageId(imageId: String): Workbook {
         return workbookRepo.findByImageId(imageId)
+            ?: throw IllegalArgumentException("Workbook with ImageId $imageId not found")
     }
 
     fun isJsonValid(jsonInString: String): Boolean {
