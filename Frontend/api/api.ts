@@ -17,3 +17,17 @@ export const parseImage = async (image: File) => {
         }
     }).then(response => response.json()).catch(error => error);
 }
+
+export const updateImageData = async (data: IPictureData) => {
+    return fetch('/api/image/' + data.imageId, {
+        method: 'PUT',
+        body: JSON.stringify({imageText: data.data}),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json()).catch(error => error);
+}
+
+export const getImageData = async (imageId: string) => {
+    return fetch('/api/image/' + imageId).then(response => response.json()).catch(error => error);
+}

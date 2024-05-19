@@ -1,19 +1,24 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import FileInput from "../../components/FileInput/FileInput";
-import {parseImage} from "../../api/api";
+import {getImageData, parseImage, updateImageData} from "../../api/api";
+import Button from "../../components/Button/Button";
+import {SubmitHandler, useForm} from "react-hook-form";
+import Searchbar from "../../components/Searchbar/Searchbar";
 
 export default function Page() {
-    const [file, setFile] = React.useState<File | null>(null);
-    const [loading, setLoading] = React.useState<boolean>(false);
-    const [error, setError] = React.useState<string | null>(null);
-    const [response, setResponse] = React.useState<IPictureData | null>(null);
+    const [file, setFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [response, setResponse] = useState<IPictureData | null>(null);
+    const {register, handleSubmit, setValue} = useForm<IPictureData>();
+
     const onFileChange = (files: FileList) => {
         if (files[0]) {
             setFile(files[0]);
         }
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (file) {
             setLoading(true);
             parseImage(file).then((response) => {
@@ -26,35 +31,107 @@ export default function Page() {
         }
     }, [file]);
 
+    useEffect(() => {
+        if (response) {
+            response.data.forEach((item, index) => {
+                setValue(`data.${index}.field1`, item.field1);
+                setValue(`data.${index}.field2`, item.field2);
+                setValue(`data.${index}.field3`, item.field3);
+            });
+        }
+    }, [response, setValue]);
+
+    const DownloadJSON = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "data.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    const onSubmit: SubmitHandler<IPictureData> = (data: IPictureData) => {
+        console.log(data);
+        setResponse((r) => ({...r, ...data}));
+        updateImageData({...response, ...data}).then((response) => {
+            console.log(response);
+        }).catch((error) => {
+            setError(error)
+            console.log(error);
+        });
+    };
+
+    const onSearchSubmit = (search: string) => {
+        console.log(search);
+        setLoading(true)
+        getImageData(search).then((response) => {
+            setResponse(response);
+        }).catch((error) => {
+            setError(error)
+            console.log(error);
+        }).finally(() => setLoading(false));
+    }
+
+    const header = (
+        <>
+            <SearchbarBlock onSearchSubmit={onSearchSubmit}/>
+            <FileInput onFileChange={onFileChange}/>
+        </>
+    )
+
     if (loading) {
-        return <div>Loading...</div>;
+        return <div>Загрузка...</div>;
     }
     if (error) {
-        return <div>Error: {JSON.stringify(error)}</div>;
+        return <div>Ошибка: {JSON.stringify(error)}</div>;
     }
     if (!response)
-        return <FileInput onFileChange={onFileChange}/>
+        return <>{header}</>;
     return (
-        <>
-            <FileInput onFileChange={onFileChange}/>
-            <table className={'table-auto border'}>
-                <thead>
-                <tr>
-                    <th>Дата</th>
-                    <th>Событие</th>
-                    <th>Основание</th>
-                </tr>
-                </thead>
-                <tbody>
-                {Object.entries(response).map(([key, value]) => (
-                    <tr key={key} className={`border-b ${value[0].length > 0 ? 'border-t-2 border-t-neutral-600' : ''}`}>
-                        <td><span className={'mx-2'}>{value[0]}</span></td>
-                        <td><span className={'mx-2'}>{value[1]}</span></td>
-                        <td><span className={'mx-2'}>{value[2]}</span></td>
+        <div className={'flex flex-col gap-3'}>
+            {header}
+            <img src={response.s3Link} alt={'Картинка трудовой книжки'} className={'w-1/2'}/>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <table className={'table table-auto border w-full'}>
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Событие</th>
+                        <th>Основание</th>
                     </tr>
-                ))}
-                </tbody>
-            </table>
-        </>
+                    </thead>
+                    <tbody>
+                    {response.data.map((item, index) => (
+                        <tr key={index}
+                            className={`border-b ${item.field1.length > 0 ? 'border-t-2 border-t-neutral-600' : ''}`}>
+                            <td><input className={'mx-2 w-full'} {...register(`data.${index}.field1`)}
+                                       defaultValue={item.field1}/>
+                            </td>
+                            <td><input className={'mx-2 w-full'} {...register(`data.${index}.field2`)}
+                                       defaultValue={item.field2}/>
+                            </td>
+                            <td><input className={'mx-2 w-full'} {...register(`data.${index}.field3`)}
+                                       defaultValue={item.field3}/>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+                <Button>Сохранить изменения</Button>
+            </form>
+            <Button type={'button'} onClick={() => DownloadJSON()}>Скачать JSON</Button>
+        </div>
     );
+}
+
+
+const SearchbarBlock = ({onSearchSubmit}: { onSearchSubmit: (search: string) => void }) => {
+    const [search, setSearch] = useState<string>('');
+    return (<form onSubmit={() => onSearchSubmit(search)} className={'flex w-full gap-3'}>
+        <Searchbar
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={'ID документа'}/>
+        <Button>Поиск</Button>
+    </form>)
 }
