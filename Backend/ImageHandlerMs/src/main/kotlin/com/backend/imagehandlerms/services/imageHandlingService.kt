@@ -13,8 +13,14 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.InputStream
+import java.time.LocalDateTime
 import java.util.*
 
+data class ImageText(
+    val field1: String,
+    val field2: String,
+    val field3: String
+)
 
 @Service
 class ImageHandlingService(
@@ -73,15 +79,25 @@ class ImageHandlingService(
 
         val responseMap = jacksonObjectMapper().convertValue(returnResponse, MutableMap::class.java) as MutableMap<String, Any>
 
-        responseMap["imageId"] = uniqueId
+        val workbook = Workbook(data = returnResponse.toString(), accuracy = 0.0f, s3Link = s3Link)
 
-        returnResponse = jacksonObjectMapper().valueToTree(responseMap)
+        val imageTextList = responseMap.map { entry ->
+            val list = entry.value as List<String>
+            val imageText = ImageText(list[0], list[1], list[2])
+            jacksonObjectMapper().valueToTree<JsonNode>(imageText)
+        }
+
+        val imageTextJsonNode = jacksonObjectMapper().createArrayNode().addAll(imageTextList)
+
+        val newResponseMap = mutableMapOf<String, Any>()
+        newResponseMap["imageText"] = imageTextJsonNode
+        newResponseMap["imageId"] = uniqueId
+        newResponseMap["s3_link"] = s3Link
 
         tempFile.delete()
-        val workbook = Workbook(data = returnResponse.toString(), accuracy = 0.0f, s3Link = s3Link)
         workbookRepo.save(workbook)
 
-        return returnResponse
+        return jacksonObjectMapper().valueToTree(newResponseMap)
     }
 
     fun editData(imageId: String, newData: String): Workbook? {
@@ -138,7 +154,7 @@ class ImageHandlingService(
             Thread.sleep(500)
         }
 
-        logger.info("Received response: $response")
+        logger.info("Received response in upload fun: $response")
         return try {
             jacksonObjectMapper().readTree(response)
         } catch (e: Exception) {

@@ -29,7 +29,7 @@ class PythonMLConsumerService(
             Thread.sleep(500)
         }
 
-        logger.info("Processed message: $message")
+        logger.info("Processed message in process fun: $message")
         return message
     }
 }
